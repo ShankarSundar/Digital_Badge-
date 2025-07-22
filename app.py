@@ -123,7 +123,7 @@ if st.session_state.overall_calculated:
     st.dataframe(community_df)
 
     st.markdown("---")
-    st.info("✅ Your full results have been saved. You may now close this tab or check the [📊 Public Leaderboard](https://your-app-url/leaderboard) for overall rankings.")
+    st.info("✅ Your full results have been saved. You may now close this tab or check the [📊 Public Leaderboard](https://digital-badge-leaderboard.streamlit.app/) for overall rankings.")
 
     # Save for external analysis
     all_df = get_overall_leaderboard()
