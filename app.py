@@ -19,15 +19,20 @@ if route == "quiz":
     st.header("📄 Quiz Questions")
 
     # Step 1: User Authentication
-    if "email" not in st.session_state:
+    if "email" not in st.session_state or "name" not in st.session_state:
+        st.subheader("Login to Start Quiz")
+        name = st.text_input("Enter your full name:")
         email = st.text_input("Enter your university email:")
+
         if st.button("Start Quiz"):
-            if email and "@university" in email:
+            if name and email and "@university" in email:
+                st.session_state.name = name
                 st.session_state.email = email
             else:
-                st.warning("Please enter a valid university email (e.g., yourname@university.edu)")
+                st.warning("Please enter a valid name and university email.")
         st.stop()
 
+    name = st.session_state.name
     email = st.session_state.email
 
     # Step 2: Load questions
@@ -79,7 +84,7 @@ if route == "quiz":
                 st.image(f"assets/{overall_badge.lower()}.png", width=150, caption=f"🏅 Overall Badge: {overall_badge}")
 
                 # Save results
-                insert_user(email, score, quiz_badge, community_score, avg_score, overall_badge)
+                insert_user(name, email, score, quiz_badge, community_score, avg_score, overall_badge)
 
                 st.markdown("---")
                 st.subheader("📈 Quiz Leaderboard")
