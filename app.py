@@ -1,7 +1,7 @@
 import streamlit as st
 import json
 from badge_logic import score_to_badge
-from database import init_db, insert_user, get_quiz_leaderboard, get_overall_leaderboard
+from database import init_db, insert_user, get_quiz_leaderboard, get_community_leaderboard, get_overall_leaderboard
 import pandas as pd
 import os
 
@@ -68,21 +68,26 @@ if st.session_state.quiz_submitted and not st.session_state.overall_calculated:
     st.success(f"✅ Your Quiz Score: {st.session_state.quiz_score}/10")
     st.image(f"assets/{st.session_state.quiz_badge.lower()}.png", width=150, caption=f"🏅 Quiz Badge: {st.session_state.quiz_badge}")
 
+    st.markdown("---")
+    st.subheader("📈 Quiz Leaderboard")
+    st.dataframe(get_quiz_leaderboard())
+
+    st.markdown("---")
+    st.subheader("🔍 Community Contribution")
     st.number_input("Enter community contribution score (0-10):", min_value=0, max_value=10, key="community_score")
 
-    if st.button("Calculate Overall Badge"):
-        avg_score = (st.session_state.quiz_score + st.session_state.community_score) / 2
-        overall_badge = score_to_badge(avg_score)
-
-        st.session_state.overall_score = avg_score
-        st.session_state.overall_badge = overall_badge
+    if st.button("Calculate Community Badge"):
+        community_badge = score_to_badge(st.session_state.community_score)
+        st.session_state.community_badge = community_badge
+        st.session_state.overall_score = (st.session_state.quiz_score + st.session_state.community_score) / 2
+        st.session_state.overall_badge = score_to_badge(st.session_state.overall_score)
         st.session_state.overall_calculated = True
         st.rerun()
 
-# -------------------- DISPLAY OVERALL + LEADERBOARDS -------------------- #
+# -------------------- DISPLAY COMMUNITY RESULTS -------------------- #
 if st.session_state.overall_calculated:
-    st.info(f"📊 Overall Score: {st.session_state.overall_score:.1f}/10")
-    st.image(f"assets/{st.session_state.overall_badge.lower()}.png", width=150, caption=f"🏅 Overall Badge: {st.session_state.overall_badge}")
+    st.info(f"💬 Community Score: {st.session_state.community_score}/10")
+    st.image(f"assets/{st.session_state.community_badge.lower()}.png", width=150, caption=f"🏅 Community Badge: {st.session_state.community_badge}")
 
     # Save result to DB
     insert_user(
@@ -91,18 +96,15 @@ if st.session_state.overall_calculated:
         st.session_state.quiz_score,
         st.session_state.quiz_badge,
         st.session_state.community_score,
+        st.session_state.community_badge,
         st.session_state.overall_score,
         st.session_state.overall_badge
     )
 
     # Leaderboards
     st.markdown("---")
-    st.subheader("📈 Quiz Leaderboard")
-    st.dataframe(get_quiz_leaderboard())
-
-    st.markdown("---")
-    st.subheader("🏆 Overall Leaderboard")
-    st.dataframe(get_overall_leaderboard())
+    st.subheader("👥 Community Leaderboard")
+    st.dataframe(get_community_leaderboard())
 
     # Save to Excel
     df_all = get_overall_leaderboard()
