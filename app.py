@@ -119,7 +119,3 @@ if st.session_state.overall_calculated:
 
     if st.button("End"):
         st.success("✅ Quiz completed. You can now close the tab.")
-'''
-
-df = pd.DataFrame({"Filename": ["app.py"], "Code": [app_py_code]})
-display_dataframe_to_user("Final App File (Updated for Google Sheets)", df)
