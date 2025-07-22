@@ -25,11 +25,11 @@ if route == "quiz":
         email = st.text_input("Enter your university email:")
 
         if st.button("Start Quiz"):
-            if name and email and "@university" in email:
-                st.session_state.name = name
-                st.session_state.email = email
+            if name.strip() != "" and "@" in email:
+                st.session_state.name = name.strip()
+                st.session_state.email = email.strip()
             else:
-                st.warning("Please enter a valid name and university email.")
+                st.warning("Please enter a valid name and email.")
         st.stop()
 
     name = st.session_state.name
