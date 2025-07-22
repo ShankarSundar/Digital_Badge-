@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 from badge_logic import score_to_badge
+from database import get_overall_leaderboard
 from database import init_db, insert_user, get_quiz_leaderboard, get_community_leaderboard, get_overall_leaderboard
 import pandas as pd
 import os
@@ -112,6 +113,9 @@ if st.session_state.overall_calculated:
         st.session_state.overall_score,
         st.session_state.overall_badge
     )
+
+    df_all = get_overall_leaderboard()
+    df_all.to_excel("leaderboard.xlsx", index=False)
 
     st.markdown("---")
     st.subheader("👥 Community Leaderboard")
