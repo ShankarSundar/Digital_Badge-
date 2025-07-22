@@ -67,18 +67,32 @@ elif route == "quiz":
 
         user_answers = []
         score = 0
+        all_answered = True  # track completeness
+
+        st.subheader("📝 Quiz Questions")
 
         for idx, q in enumerate(questions):
-            selected = st.radio(q["question"], q["options"], key=f"q_{idx}")
+            options = ["-- Select an answer --"] + q["options"]
+            selected = st.radio(q["question"], options, key=f"q_{idx}")
+
+            # Check if user left it blank (still on placeholder)
+            if selected == "-- Select an answer --":
+                all_answered = False
+
             user_answers.append({"selected": selected, "correct": q["answer"]})
 
         st.subheader("💬 Community Engagement Score")
         community_score = st.slider("Rate your community engagement (0–10)", 0, 10, 5)
 
         if st.button("Submit Quiz"):
-            for ans in user_answers:
-                if ans["selected"] == ans["correct"]:
-                    score += 1
+            if not all_answered:
+                st.warning("❗ Please answer all questions before submitting.")
+            else:
+                for ans in user_answers:
+                    if ans["selected"] == ans["correct"]:
+                        score += 1
+
+                # (continue with your score_badge, insert_user, etc.)
 
             score_badge = assign_score_badge(score)
             avg_score = (score + community_score) / 2
