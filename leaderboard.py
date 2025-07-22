@@ -1,28 +1,16 @@
 import streamlit as st
+from database import get_overall_leaderboard
 import pandas as pd
-from database import get_leaderboard
-from io import BytesIO
 
-st.set_page_config(page_title="🏆 Leaderboard", layout="wide")
-st.title("📊 Full Performance Leaderboard")
+st.set_page_config(page_title="📊 Overall Leaderboard", layout="centered")
+st.title("🏆 Digital Badge - Overall Leaderboard")
 
 try:
-    df = get_leaderboard()
-
-    if df.empty:
-        st.warning("Leaderboard is currently empty.")
+    leaderboard_df = get_overall_leaderboard()
+    if leaderboard_df.empty:
+        st.info("No records found yet.")
     else:
-        st.dataframe(df, use_container_width=True)
-
-        excel_buffer = BytesIO()
-        df.to_excel(excel_buffer, index=False, engine='openpyxl')
-        excel_buffer.seek(0)
-
-        st.download_button(
-            label="⬇ Download Leaderboard (Excel)",
-            data=excel_buffer,
-            file_name="leaderboard.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        st.dataframe(leaderboard_df)
+        st.success("Leaderboard loaded successfully.")
 except Exception as e:
     st.error(f"❌ Failed to load leaderboard: {e}")
