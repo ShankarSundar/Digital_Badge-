@@ -72,9 +72,8 @@ if st.session_state.quiz_submitted and not st.session_state.overall_calculated:
 
     if st.button("Calculate Overall Badge"):
         avg_score = (st.session_state.quiz_score + st.session_state.community_score) / 2
-        st.session_state.overall_score = avg_score
+        overall_badge = score_to_badge(avg_score)
 
-        st.session_state.community_score = community_score
         st.session_state.overall_score = avg_score
         st.session_state.overall_badge = overall_badge
         st.session_state.overall_calculated = True
@@ -107,7 +106,7 @@ if st.session_state.overall_calculated:
 
     # Save to Excel
     df_all = get_overall_leaderboard()
-    df_all.to_excel("quiz_results.xlsx", index=False)
+    df_all.to_excel("user_submission.xlsx", index=False)
 
     if st.button("End"):
         st.success("✅ Quiz completed. You can now close the tab.")
