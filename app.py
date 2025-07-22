@@ -67,16 +67,19 @@ elif route == "quiz":
 
         user_answers = []
         score = 0
-        all_answered = True  # track completeness
+        all_answered = True
 
         st.subheader("📝 Quiz Questions")
 
         for idx, q in enumerate(questions):
-            options = ["-- Select an answer --"] + q["options"]
-            selected = st.radio(q["question"], options, key=f"q_{idx}")
+            selected = st.radio(
+                q["question"],
+                q["options"],
+                key=f"q_{idx}",
+                index=None  # 🟢 This ensures no default selection
+            )
 
-            # Check if user left it blank (still on placeholder)
-            if selected == "-- Select an answer --":
+            if selected is None:
                 all_answered = False
 
             user_answers.append({"selected": selected, "correct": q["answer"]})
@@ -92,7 +95,6 @@ elif route == "quiz":
                     if ans["selected"] == ans["correct"]:
                         score += 1
 
-                # (continue with your score_badge, insert_user, etc.)
 
             score_badge = assign_score_badge(score)
             avg_score = (score + community_score) / 2
