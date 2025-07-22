@@ -166,3 +166,4 @@ cython_debug/
 # Ignore Python cache files
 __pycache__/
 credentials.json
+*.xlsx
