@@ -2,10 +2,8 @@ import streamlit as st
 import pandas as pd
 from database import get_overall_leaderboard
 
-st.set_page_config(page_title="🏅 Leaderboard Summary", layout="wide")
-st.title("📊 Overall Leaderboard")
-
-st.markdown("Here is the complete performance table for all users:")
+st.set_page_config(page_title="🏅 Public Leaderboard", layout="wide")
+st.title("📊 Full Overall Leaderboard")
 
 leaderboard_df = get_overall_leaderboard()
 st.dataframe(leaderboard_df, use_container_width=True)
@@ -17,3 +15,4 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
+st.success("Share this page link with your faculty or project manager.")

@@ -10,12 +10,25 @@ st.title("📘 Knowledge Check Quiz")
 
 init_db()
 
-# Initialize session state
-for key in ["name", "email", "quiz_submitted", "overall_calculated"]:
-    if key not in st.session_state:
-        st.session_state[key] = False if "_calculated" in key or "_submitted" in key else ""
+# -------------------- SESSION INITIALIZATION -------------------- #
+default_values = {
+    "name": "",
+    "email": "",
+    "quiz_submitted": False,
+    "overall_calculated": False,
+    "quiz_score": 0,
+    "quiz_badge": "",
+    "community_score": 0,
+    "community_badge": "",
+    "overall_score": 0.0,
+    "overall_badge": ""
+}
 
-# -------------------- LOGIN SECTION -------------------- #
+for key, value in default_values.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+# -------------------- LOGIN -------------------- #
 if not st.session_state.name or not st.session_state.email:
     st.subheader("Login to Start Quiz")
     name = st.text_input("Enter your full name:")
@@ -63,33 +76,32 @@ if not st.session_state.quiz_submitted:
             st.session_state.quiz_submitted = True
             st.rerun()
 
-# -------------------- DISPLAY QUIZ RESULT -------------------- #
+# -------------------- DISPLAY QUIZ RESULT + LEADERBOARD -------------------- #
 if st.session_state.quiz_submitted and not st.session_state.overall_calculated:
     st.success(f"✅ Your Quiz Score: {st.session_state.quiz_score}/10")
     st.image(f"assets/{st.session_state.quiz_badge.lower()}.png", width=150, caption=f"🏅 Quiz Badge: {st.session_state.quiz_badge}")
 
     st.markdown("---")
-    st.subheader("📈 Quiz Leaderboard")
-    st.dataframe(get_quiz_leaderboard())
+    st.subheader("📊 Quiz Leaderboard")
+    quiz_df = get_quiz_leaderboard()
+    st.dataframe(quiz_df)
 
     st.markdown("---")
-    st.subheader("🔍 Community Contribution")
-    st.number_input("Enter community contribution score (0-10):", min_value=0, max_value=10, key="community_score")
+    st.subheader("💬 Community Contribution")
+    st.number_input("Enter community contribution score (0–10):", min_value=0, max_value=10, key="community_score")
 
     if st.button("Calculate Community Badge"):
-        community_badge = score_to_badge(st.session_state.community_score)
-        st.session_state.community_badge = community_badge
+        st.session_state.community_badge = score_to_badge(st.session_state.community_score)
         st.session_state.overall_score = (st.session_state.quiz_score + st.session_state.community_score) / 2
         st.session_state.overall_badge = score_to_badge(st.session_state.overall_score)
         st.session_state.overall_calculated = True
         st.rerun()
 
-# -------------------- DISPLAY COMMUNITY RESULTS -------------------- #
+# -------------------- COMMUNITY RESULTS + COMMUNITY LEADERBOARD -------------------- #
 if st.session_state.overall_calculated:
     st.info(f"💬 Community Score: {st.session_state.community_score}/10")
     st.image(f"assets/{st.session_state.community_badge.lower()}.png", width=150, caption=f"🏅 Community Badge: {st.session_state.community_badge}")
 
-    # Save result to DB
     insert_user(
         st.session_state.name,
         st.session_state.email,
@@ -101,14 +113,17 @@ if st.session_state.overall_calculated:
         st.session_state.overall_badge
     )
 
-    # Leaderboards
     st.markdown("---")
     st.subheader("👥 Community Leaderboard")
-    st.dataframe(get_community_leaderboard())
+    community_df = get_community_leaderboard()
+    st.dataframe(community_df)
 
-    # Save to Excel
-    df_all = get_overall_leaderboard()
-    df_all.to_excel("user_submission.xlsx", index=False)
+    st.markdown("---")
+    st.info("✅ Your full results have been saved. You may now close this tab or check the [📊 Public Leaderboard](https://your-app-url/leaderboard) for overall rankings.")
+
+    # Save for external analysis
+    all_df = get_overall_leaderboard()
+    all_df.to_excel("user_submission.xlsx", index=False)
 
     if st.button("End"):
         st.success("✅ Quiz completed. You can now close the tab.")

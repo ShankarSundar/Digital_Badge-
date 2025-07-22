@@ -43,6 +43,6 @@ def get_community_leaderboard():
 
 def get_overall_leaderboard():
     conn = sqlite3.connect(DB_NAME)
-    df = pd.read_sql_query("SELECT * FROM users ORDER BY overall_score DESC", conn)
+    df = pd.read_sql_query("SELECT name, email, quiz_score, quiz_badge, community_score, community_badge, overall_score, overall_badge FROM users ORDER BY overall_score DESC", conn)
     conn.close()
     return df
