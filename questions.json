@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What is considered a business activity?",
+    "options": ["Any activity done for charity", "Any government-led initiative", "Any activity that earns money and makes a profit", "Activities with no monetary exchange"],
+    "answer": "Any activity that earns money and makes a profit"
+  },
+  {
+    "question": "Why must even NGOs and non-profits generate a &#39;profit&#39; or surplus?",
+    "options": ["To pay taxes", "To attract investors", "To sustain operations and grow", "To comply with regulations"],
+    "answer": "To sustain operations and grow"
+  },
+  {
+    "question": "Who are considered shareholders in a startup context?",
+    "options": ["The employees of the business", "Family or friends who invest money in your startup", "Customers who buy products", "Suppliers who give credit"],
+    "answer": "Family or friends who invest money in your startup"
+  },
+  {
+    "question": "Which of the following best describes the role of a financial manager??",
+    "options": ["Preparing legal contracts","Managing office supplies","Making decisions to maximise shareholder wealth","Handling customer complaints"],
+    "answer": "Making decisions to maximise shareholder wealth"
+  },
+  {
+    "question": "What is meant by ‘welfare loss’ in the context of business?",
+    "options": ["Extra costs paid to the government", "Social costs arising from overproduction or inefficiencies", "Poor employee benefits", "Inflation-related costs"],
+    "answer": "Social costs arising from overproduction or inefficiencies"
+  },
+  {
+    "question": "Which of the following is NOT one of the stakeholders of a business?",
+    "options": ["Suppliers", "Creditors", "Employees", "Tourists"],
+    "answer": "Tourists"
+  },
+  {
+    "question": "What is the primary financial objective of a firm according to the lecture?",
+    "options": ["Minimising costs", "Maximising sales", "Maximising shareholder wealth", "Increasing employee count"],
+    "answer": "Maximising shareholder wealth"
+  },
+  {
+    "question": "In finance, what is risk commonly defined as??",
+    "options": ["Any possibility of theft", "A deviation from expected outcome", "A legal issue in a business", "Delay in product delivery"],
+    "answer": "A deviation from expected outcome"
+  },
+  {
+    "question": "Which of the following is a way to return value to shareholders?",
+    "options": ["Issuing more shares", "Reducing market share", "Paying dividends or increasing share price", "Increasing production costs"],
+    "answer": "Paying dividends or increasing share price"
+  },
+  {
+    "question": "Why did Microsoft create many millionaire shareholders despite not paying dividends for the first 10 years?",
+    "options": ["By giving away free shares", "Through aggressive marketing", "Because the company’s share price appreciated significantly", "Due to government subsidies"],
+    "answer": "Because the company’s share price appreciated significantly"
+  }
+]
