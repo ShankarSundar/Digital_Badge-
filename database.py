@@ -1,48 +1,32 @@
-import sqlite3
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
-DB_NAME = "users.db"
+# Setup Google Sheets connection
+def get_sheet():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    client = gspread.authorize(creds)
+    sheet = client.open("Digital Badge Leaderboard").sheet1
+    return sheet
 
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            name TEXT,
-            email TEXT,
-            quiz_score INTEGER,
-            quiz_badge TEXT,
-            community_score INTEGER,
-            community_badge TEXT,
-            overall_score REAL,
-            overall_badge TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
+# Insert a new user record into the sheet
 def insert_user(name, email, quiz_score, quiz_badge, community_score, community_badge, overall_score, overall_badge):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-              (name, email, quiz_score, quiz_badge, community_score, community_badge, overall_score, overall_badge))
-    conn.commit()
-    conn.close()
+    sheet = get_sheet()
+    sheet.append_row([
+        name,
+        email,
+        quiz_score,
+        quiz_badge,
+        community_score,
+        community_badge,
+        overall_score,
+        overall_badge
+    ])
 
-def get_quiz_leaderboard():
-    conn = sqlite3.connect(DB_NAME)
-    df = pd.read_sql_query("SELECT name, email, quiz_score, quiz_badge FROM users ORDER BY quiz_score DESC", conn)
-    conn.close()
-    return df
-
-def get_community_leaderboard():
-    conn = sqlite3.connect(DB_NAME)
-    df = pd.read_sql_query("SELECT name, email, community_score, community_badge FROM users ORDER BY community_score DESC", conn)
-    conn.close()
-    return df
-
-def get_overall_leaderboard():
-    conn = sqlite3.connect(DB_NAME)
-    df = pd.read_sql_query("SELECT name, email, quiz_score, quiz_badge, community_score, community_badge, overall_score, overall_badge FROM users ORDER BY overall_score DESC", conn)
-    conn.close()
+# Retrieve leaderboard data
+def get_leaderboard():
+    sheet = get_sheet()
+    data = sheet.get_all_records()
+    df = pd.DataFrame(data)
     return df
