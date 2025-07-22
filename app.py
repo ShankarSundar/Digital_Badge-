@@ -1,35 +1,26 @@
 import streamlit as st
 import json
-from badge_logic import score_to_badge
-from database import get_overall_leaderboard
-from database import init_db, insert_user, get_quiz_leaderboard, get_community_leaderboard, get_overall_leaderboard
 import pandas as pd
-import os
+from badge_logic import score_to_badge
+from database import (
+    init_db, insert_user,
+    get_quiz_leaderboard,
+    get_community_leaderboard,
+    get_overall_leaderboard
+)
 
-st.set_page_config(page_title="Knowledge Check Quiz", layout="centered")
+st.set_page_config(page_title="🎓 Knowledge Check Quiz", layout="centered")
 st.title("📘 Knowledge Check Quiz")
 
+# Initialize database
 init_db()
 
-# -------------------- SESSION INITIALIZATION -------------------- #
-default_values = {
-    "name": "",
-    "email": "",
-    "quiz_submitted": False,
-    "overall_calculated": False,
-    "quiz_score": 0,
-    "quiz_badge": "",
-    "community_score": 0,
-    "community_badge": "",
-    "overall_score": 0.0,
-    "overall_badge": ""
-}
-
-for key, value in default_values.items():
+# Initialize session state
+for key in ["name", "email", "quiz_submitted", "overall_calculated"]:
     if key not in st.session_state:
-        st.session_state[key] = value
+        st.session_state[key] = False if "_calculated" in key or "_submitted" in key else ""
 
-# -------------------- LOGIN -------------------- #
+# -------------------- LOGIN SECTION -------------------- #
 if not st.session_state.name or not st.session_state.email:
     st.subheader("Login to Start Quiz")
     name = st.text_input("Enter your full name:")
@@ -41,7 +32,7 @@ if not st.session_state.name or not st.session_state.email:
             st.session_state.email = email.strip()
             st.rerun()
         else:
-            st.warning("Please enter a valid name and email.")
+            st.warning("Please enter a valid name and university email.")
     st.stop()
 
 # -------------------- QUIZ SECTION -------------------- #
@@ -77,32 +68,33 @@ if not st.session_state.quiz_submitted:
             st.session_state.quiz_submitted = True
             st.rerun()
 
-# -------------------- DISPLAY QUIZ RESULT + LEADERBOARD -------------------- #
+# -------------------- DISPLAY QUIZ RESULT -------------------- #
 if st.session_state.quiz_submitted and not st.session_state.overall_calculated:
     st.success(f"✅ Your Quiz Score: {st.session_state.quiz_score}/10")
     st.image(f"assets/{st.session_state.quiz_badge.lower()}.png", width=150, caption=f"🏅 Quiz Badge: {st.session_state.quiz_badge}")
 
     st.markdown("---")
-    st.subheader("📊 Quiz Leaderboard")
-    quiz_df = get_quiz_leaderboard()
-    st.dataframe(quiz_df)
+    st.subheader("📈 Quiz Leaderboard")
+    st.dataframe(get_quiz_leaderboard())
 
     st.markdown("---")
-    st.subheader("💬 Community Contribution")
-    st.number_input("Enter community contribution score (0–10):", min_value=0, max_value=10, key="community_score")
+    st.subheader("🔍 Community Contribution")
+    st.number_input("Enter community contribution score (0-10):", min_value=0, max_value=10, key="community_score")
 
     if st.button("Calculate Community Badge"):
-        st.session_state.community_badge = score_to_badge(st.session_state.community_score)
+        community_badge = score_to_badge(st.session_state.community_score)
+        st.session_state.community_badge = community_badge
         st.session_state.overall_score = (st.session_state.quiz_score + st.session_state.community_score) / 2
         st.session_state.overall_badge = score_to_badge(st.session_state.overall_score)
         st.session_state.overall_calculated = True
         st.rerun()
 
-# -------------------- COMMUNITY RESULTS + COMMUNITY LEADERBOARD -------------------- #
+# -------------------- DISPLAY COMMUNITY RESULTS -------------------- #
 if st.session_state.overall_calculated:
     st.info(f"💬 Community Score: {st.session_state.community_score}/10")
     st.image(f"assets/{st.session_state.community_badge.lower()}.png", width=150, caption=f"🏅 Community Badge: {st.session_state.community_badge}")
 
+    # Save result to DB
     insert_user(
         st.session_state.name,
         st.session_state.email,
@@ -114,20 +106,20 @@ if st.session_state.overall_calculated:
         st.session_state.overall_badge
     )
 
-    df_all = get_overall_leaderboard()
-    df_all.to_excel("leaderboard.xlsx", index=False)
-
+    # Leaderboards
     st.markdown("---")
     st.subheader("👥 Community Leaderboard")
-    community_df = get_community_leaderboard()
-    st.dataframe(community_df)
+    st.dataframe(get_community_leaderboard())
 
     st.markdown("---")
-    st.info("✅ Your full results have been saved. You may now close this tab or check the [📊 Public Leaderboard](https://digital-badge-leaderboard.streamlit.app/) for overall rankings.")
-
-    # Save for external analysis
-    all_df = get_overall_leaderboard()
-    all_df.to_excel("user_submission.xlsx", index=False)
+    st.subheader("🏆 Overall Leaderboard")
+    df_all = get_overall_leaderboard()
+    st.dataframe(df_all)
+    df_all.to_excel("leaderboard.xlsx", index=False)
 
     if st.button("End"):
         st.success("✅ Quiz completed. You can now close the tab.")
+'''
+
+df = pd.DataFrame({"Filename": ["app.py"], "Code": [app_py_code]})
+display_dataframe_to_user("Final App File (Updated for Google Sheets)", df)
