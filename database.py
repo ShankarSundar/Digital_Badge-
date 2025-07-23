@@ -75,35 +75,34 @@ def get_community_leaderboard():
 
 
 def get_overall_leaderboard():
-    quiz_df = pd.DataFrame(sheet.worksheet("Quiz").get_all_records())
-    community_df = pd.DataFrame(sheet.worksheet("Community").get_all_records())
+    worksheet = sheet.worksheet("Leaderboard")
+    data = worksheet.get_all_records()
+    df = pd.DataFrame(data)
 
-    merged = pd.merge(quiz_df, community_df, on="email", how="outer")
+    # Normalize column names to lowercase
+    df.columns = [col.lower() for col in df.columns]
 
-    merged["quiz_score"] = merged["quiz_score"].fillna(0)
-    merged["community_score"] = merged["community_score"].fillna(0)
+    # Separate quiz and community data
+    quiz_df = df[["name", "email", "quiz_score", "quiz_badge"]]
+    community_df = df[["name", "email", "community_score", "community_badge", "overall_score", "overall_badge"]]
 
-    merged["overall_score"] = (merged["quiz_score"] + merged["community_score"]) / 2
+    # Merge the dataframes
+    merged = pd.merge(quiz_df, community_df, on="email", how="outer", suffixes=('_quiz', '_community'))
 
-    def score_to_badge(score):
-        if score >= 9:
-            return "Gold"
-        elif score >= 6:
-            return "Silver"
-        elif score >= 3:
-            return "Bronze"
-        else:
-            return "No Badge"
+    # Drop duplicate name columns
+    merged["name"] = merged["name_quiz"].combine_first(merged["name_community"])
+    merged = merged.drop(columns=["name_quiz", "name_community"])
 
-    merged["overall_badge"] = merged["overall_score"].apply(score_to_badge)
+    # Reorder columns
+    final_df = merged[
+        ["name", "email", "quiz_score", "quiz_badge", "community_score", "community_badge", "overall_score", "overall_badge"]
+    ]
 
-    merged = merged[[
-        "name", "email", "quiz_score", "quiz_badge",
-        "community_score", "community_badge",
-        "overall_score", "overall_badge"
-    ]]
+    # Sort by overall score
+    final_df = final_df.sort_values(by="overall_score", ascending=False)
 
-    return merged.sort_values(by="overall_score", ascending=False)
+    return final_df
+
 
 def update_user_score(email, community_score, community_badge):
     worksheet = sheet.worksheet("Community")

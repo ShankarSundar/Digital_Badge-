@@ -1,4 +1,4 @@
-[
+quiz_questions = [
   {
     "question": "What is considered a business activity?",
     "options": ["Any activity done for charity", "Any government-led initiative", "Any activity that earns money and makes a profit", "Activities with no monetary exchange"],
@@ -50,3 +50,12 @@
     "answer": "Because the company’s share price appreciated significantly"
   }
 ]
+
+
+user_answers = []
+for i, q in enumerate(quiz_questions):
+    st.markdown(f"**{q['question']}**")
+    user_choice = st.radio(
+        f"Question {i+1}", q["options"], key=f"question_{i}"
+    )
+    user_answers.append(user_choice)
