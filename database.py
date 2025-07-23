@@ -47,17 +47,32 @@ def get_quiz_leaderboard():
     data = worksheet.get_all_records()
     df = pd.DataFrame(data)
 
-    # Clean column names
-    df.columns = df.columns.str.strip().str.lower()
+    # Standardize column names
+    df.columns = [col.lower().strip().replace(" ", "_") for col in df.columns]
+
+    # Only keep quiz-related columns
+    df = df[["name", "email", "quiz_score", "quiz_badge"]]
 
     df_sorted = df.sort_values(by="quiz_score", ascending=False)
     return df_sorted
 
 
 def get_community_leaderboard():
-    df = pd.DataFrame(sheet.worksheet("Community").get_all_records())
+    worksheet = sheet.worksheet("Leaderboard")
+    data = worksheet.get_all_records()
+    df = pd.DataFrame(data)
+
+    df.columns = [col.lower().strip().replace(" ", "_") for col in df.columns]
+
+    # Ensure required columns exist
+    if "community_score" not in df.columns:
+        st.warning("Missing 'community_score' column in Google Sheet.")
+        return pd.DataFrame()
+
+    df = df[["name", "email", "community_score", "community_badge"]]
     df_sorted = df.sort_values(by="community_score", ascending=False)
     return df_sorted
+
 
 def get_overall_leaderboard():
     quiz_df = pd.DataFrame(sheet.worksheet("Quiz").get_all_records())
