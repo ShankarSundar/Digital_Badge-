@@ -4,97 +4,104 @@ import random
 from badge_logic import score_to_badge
 from database import (
     insert_user,
+    update_community_score,
     get_quiz_leaderboard,
     get_community_leaderboard,
     get_overall_leaderboard
 )
 
 st.set_page_config(page_title="Digital Badge Quiz", layout="centered")
+st.title("🎓 Knowledge Quiz & Community Score")
 
-st.title("🎓 Digital Badge Assessment")
+if "step" not in st.session_state:
+    st.session_state.step = 1
 
-# Session state
-if "quiz_submitted" not in st.session_state:
-    st.session_state.quiz_submitted = False
-if "community_submitted" not in st.session_state:
-    st.session_state.community_submitted = False
-
-# User login
-with st.form("login_form"):
-    st.subheader("🔐 Login")
-    user_name = st.text_input("Enter your name")
-    user_email = st.text_input("Enter your university email")
-    submitted_login = st.form_submit_button("Start Quiz")
-    if submitted_login:
-        if user_name and user_email:
-            st.session_state.user_name = user_name
-            st.session_state.user_email = user_email
+# Step 1: Login
+if st.session_state.step == 1:
+    st.subheader("Enter Your Details")
+    name = st.text_input("Name")
+    email = st.text_input("Email")
+    if st.button("Start Quiz"):
+        if name and email:
+            st.session_state.name = name
+            st.session_state.email = email
+            try:
+                with open("questions.json", "r", encoding="utf-8") as f:
+                    questions = json.load(f)
+                st.session_state.selected_questions = random.sample(questions, k=10)
+            except Exception as e:
+                st.error(f"Error loading questions: {e}")
+                st.stop()
+            st.session_state.answers = [None] * 10
+            st.session_state.step = 2
         else:
             st.warning("Please enter both name and email to continue.")
 
-if "user_name" in st.session_state and "user_email" in st.session_state:
-    st.success(f"Welcome {st.session_state.user_name}! Start answering the quiz below.")
-
-    # Load questions
-    try:
-        with open("questions.json", "r", encoding="utf-8") as f:
-            questions = json.load(f)
-        random.shuffle(questions)
-        selected_questions = questions[:5]
-    except Exception as e:
-        st.error(f"Error loading questions: {e}")
-        st.stop()
-
-    # Quiz
-    answers = {}
-    with st.form("quiz_form"):
-        st.subheader("📝 Quiz")
-        for i, q in enumerate(selected_questions):
-            st.markdown(f"**Q{i+1}: {q['question']}**")
-            options = q.get("options", [])
-            if options:
-                answers[q["question"]] = st.radio("", options, key=f"q{i}")
-        submitted_quiz = st.form_submit_button("Submit Quiz")
-
-    if submitted_quiz and not st.session_state.quiz_submitted:
-        score = 0
-        for q in selected_questions:
-            user_ans = answers[q["question"]]
-            if user_ans == q["answer"]:
-                score += 1
-        quiz_badge = score_to_badge(score)
-        st.success(f"✅ You scored {score}/5. Your Quiz Badge: 🏅 {quiz_badge}")
-        insert_user(st.session_state.user_name, st.session_state.user_email, score, quiz_badge, 0, "", 0, "")
-        st.session_state.quiz_submitted = True
-
+# Step 2: Quiz
+elif st.session_state.step == 2:
+    st.subheader("🧠 Quiz Time!")
+    score = 0
+    for i, q in enumerate(st.session_state.selected_questions):
+        st.markdown(f"**Q{i+1}. {q['question']}**")
+        options = q["options"]
+        selected = st.radio(
+            "Choose one:", options, key=f"q{i}", index=options.index(st.session_state.answers[i]) if st.session_state.answers[i] else 0
+        )
+        st.session_state.answers[i] = selected
         st.markdown("---")
-        st.subheader("📊 Quiz Leaderboard")
-        st.dataframe(get_quiz_leaderboard())
 
-    # Community section
-    if st.session_state.quiz_submitted and not st.session_state.community_submitted:
-        st.markdown("---")
-        st.subheader("🌐 Community Contribution Score")
-        community_score = st.slider("Enter your Community Score (0-10)", 0, 10, 0)
-        if st.button("Submit Community Score"):
+    if st.button("Submit Quiz"):
+        user_answers = zip([q["answer"] for q in st.session_state.selected_questions], st.session_state.answers)
+        score = sum(1 for correct, user_ans in user_answers if correct == user_ans)
+        badge = score_to_badge(score)
+        insert_user(st.session_state.name, st.session_state.email, score, badge, "", "", "", "")
+        st.session_state.quiz_score = score
+        st.session_state.quiz_badge = badge
+        st.session_state.step = 3
+
+# Step 3: Show Quiz Results
+elif st.session_state.step == 3:
+    st.success(f"✅ You scored {st.session_state.quiz_score}/10!")
+    st.info(f"🏅 Quiz Badge: {st.session_state.quiz_badge}")
+    st.subheader("📊 Quiz Leaderboard")
+    st.dataframe(get_quiz_leaderboard())
+    if st.button("Enter Community Score"):
+        st.session_state.step = 4
+
+# Step 4: Enter Community Score
+elif st.session_state.step == 4:
+    st.subheader("🤝 Community Participation")
+    community_score = st.number_input("Enter your community score (0–10):", 0, 10, step=1)
+    if st.button("Submit Community Score"):
+        try:
+            community_score = float(community_score)
             community_badge = score_to_badge(community_score)
-            st.success(f"Community Score: {community_score}, Badge: 🏅 {community_badge}")
-            # Update entry
-            insert_user(
-                st.session_state.user_name,
-                st.session_state.user_email,
-                score,
-                quiz_badge,
+            overall_score = (st.session_state.quiz_score + community_score) / 2
+            overall_badge = score_to_badge(overall_score)
+            update_community_score(
+                st.session_state.email,
                 community_score,
                 community_badge,
-                (score + community_score) / 2,
-                score_to_badge((score + community_score) / 2)
+                overall_score,
+                overall_badge
             )
-            st.session_state.community_submitted = True
+            st.session_state.community_score = community_score
+            st.session_state.community_badge = community_badge
+            st.session_state.step = 5
+        except Exception as e:
+            st.error(f"Error: {e}")
 
-            st.markdown("---")
-            st.subheader("👥 Community Leaderboard")
-            st.dataframe(get_community_leaderboard())
+# Step 5: Show Community & Overall Leaderboards
+elif st.session_state.step == 5:
+    st.success(f"🫂 Community Score: {st.session_state.community_score}/10")
+    st.info(f"🤝 Community Badge: {st.session_state.community_badge}")
+    st.subheader("🌍 Community Leaderboard")
+    st.dataframe(get_community_leaderboard())
+    if st.button("Next: View Overall Leaderboard"):
+        st.session_state.step = 6
 
-            if st.button("Go to Overall Leaderboard"):
-                st.switch_page("https://digital-badge-leaderboard.streamlit.app")
+# Step 6: Overall Leaderboard
+elif st.session_state.step == 6:
+    st.subheader("🏆 Overall Leaderboard")
+    st.dataframe(get_overall_leaderboard())
+    st.markdown("You may now close the app.")
