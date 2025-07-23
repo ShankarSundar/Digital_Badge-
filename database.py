@@ -1,13 +1,21 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
+import streamlit as st
+import json
+
 
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-credentials = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+
+# Read credentials from Streamlit secrets
+credentials_dict = st.secrets["gcp_service_account"]
+credentials_json = json.loads(json.dumps(credentials_dict))
+
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json, scope)
 client = gspread.authorize(credentials)
 sheet = client.open("Digital Badge Leaderboard")
 
