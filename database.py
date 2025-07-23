@@ -28,14 +28,31 @@ def init_db():
     except gspread.exceptions.WorksheetNotFound:
         sheet.add_worksheet(title="Community", rows="1000", cols="10")
 
-def insert_user(name, email, quiz_score, quiz_badge):
-    worksheet = sheet.worksheet("Quiz")
-    worksheet.append_row([name, email, quiz_score, quiz_badge])
+def insert_user(name, email, quiz_score, quiz_badge, community_score, community_badge, overall_score, overall_badge):
+    worksheet = sheet.worksheet("Leaderboard")
+    worksheet.append_row([
+        name,
+        email,
+        quiz_score,
+        quiz_badge,
+        community_score,
+        community_badge,
+        overall_score,
+        overall_badge
+    ])
+
 
 def get_quiz_leaderboard():
-    df = pd.DataFrame(sheet.worksheet("Quiz").get_all_records())
+    worksheet = sheet.worksheet("Leaderboard")
+    data = worksheet.get_all_records()
+    df = pd.DataFrame(data)
+
+    # Clean column names
+    df.columns = df.columns.str.strip().str.lower()
+
     df_sorted = df.sort_values(by="quiz_score", ascending=False)
     return df_sorted
+
 
 def get_community_leaderboard():
     df = pd.DataFrame(sheet.worksheet("Community").get_all_records())
