@@ -13,9 +13,7 @@ scope = [
 
 # Read credentials from Streamlit secrets
 credentials_dict = st.secrets["gcp_service_account"]
-credentials_json = json.loads(json.dumps(credentials_dict))
-
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json, scope)
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 client = gspread.authorize(credentials)
 sheet = client.open("Digital Badge Leaderboard")
 
