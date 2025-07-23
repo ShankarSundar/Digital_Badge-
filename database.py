@@ -14,18 +14,51 @@ credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict,
 client = gspread.authorize(credentials)
 sheet = client.open("Digital Badge Leaderboard").worksheet("Leaderboard")
 
+HEADERS = ["Name", "Email", "Quiz_Score", "Quiz_Badge", "Community_Score", "Community_Badge", "Overall_Score", "Overall_Badge"]
+
 def insert_user(name, email, quiz_score, quiz_badge, community_score, community_badge, overall_score, overall_badge):
+    existing = sheet.get_all_values()
+    if not existing:
+        sheet.append_row(HEADERS)
     sheet.append_row([name, email, quiz_score, quiz_badge, community_score, community_badge, overall_score, overall_badge])
 
 def update_community_score(email, community_score, community_badge, overall_score, overall_badge):
-    records = sheet.get_all_records()
-    for idx, row in enumerate(records, start=2):
-        if row.get("Email", "").strip().lower() == email.strip().lower():
-            sheet.update(f"E{idx}", str(community_score))
-            sheet.update(f"F{idx}", community_badge)
-            sheet.update(f"G{idx}", str(overall_score))
-            sheet.update(f"H{idx}", overall_badge)
+    df = pd.DataFrame(sheet.get_all_records())
+
+    if df.empty:
+        st.error("Google Sheet is empty.")
+        return
+
+    # Normalize column names
+    df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
+    email_col = "email"
+
+    if email_col not in df.columns:
+        st.error(f"Column '{email_col}' not found in sheet. Found columns: {df.columns.tolist()}")
+        return
+
+    email = email.strip().lower()
+    found = False
+
+    for i, row in df.iterrows():
+        if str(row[email_col]).strip().lower() == email:
+            df.at[i, "community_score"] = community_score
+            df.at[i, "community_badge"] = community_badge
+            df.at[i, "overall_score"] = overall_score
+            df.at[i, "overall_badge"] = overall_badge
+            found = True
             break
+
+    if not found:
+        st.warning("User not found in leaderboard for community update.")
+        return
+
+    # Push updated data
+    sheet.clear()
+    sheet.append_row(["Name", "Email", "Quiz_Score", "Quiz_Badge", "Community_Score", "Community_Badge", "Overall_Score", "Overall_Badge"])
+    for row in df.itertuples(index=False):
+        sheet.append_row(list(row))
+
 
 def get_quiz_leaderboard():
     df = pd.DataFrame(sheet.get_all_records())

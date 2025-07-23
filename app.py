@@ -32,32 +32,41 @@ if st.session_state.step == 1:
             except Exception as e:
                 st.error(f"Error loading questions: {e}")
                 st.stop()
-            st.session_state.answers = [None] * 10
             st.session_state.step = 2
+            st.rerun()
         else:
             st.warning("Please enter both name and email to continue.")
 
 # Step 2: Quiz
 elif st.session_state.step == 2:
     st.subheader("🧠 Quiz Time!")
-    score = 0
+
     for i, q in enumerate(st.session_state.selected_questions):
         st.markdown(f"**Q{i+1}. {q['question']}**")
-        options = q["options"]
-        selected = st.radio(
-            "Choose one:", options, key=f"q{i}", index=options.index(st.session_state.answers[i]) if st.session_state.answers[i] else 0
-        )
-        st.session_state.answers[i] = selected
+        options = ["-- Select an option --"] + q["options"]
+        key = f"question_{i}_{q['question'][:10]}"
+        selected = st.radio("Choose one:", options, key=key)
         st.markdown("---")
 
     if st.button("Submit Quiz"):
-        user_answers = zip([q["answer"] for q in st.session_state.selected_questions], st.session_state.answers)
+        user_answers = []
+        for i, q in enumerate(st.session_state.selected_questions):
+            key = f"question_{i}_{q['question'][:10]}"
+            user_answer = st.session_state.get(key)
+            if user_answer not in q["options"]:
+                st.warning("Please answer all questions before submitting.")
+                st.stop()
+            user_answers.append((q["answer"], user_answer))
+
         score = sum(1 for correct, user_ans in user_answers if correct == user_ans)
         badge = score_to_badge(score)
+
+        # Insert full row with initial quiz data
         insert_user(st.session_state.name, st.session_state.email, score, badge, "", "", "", "")
         st.session_state.quiz_score = score
         st.session_state.quiz_badge = badge
         st.session_state.step = 3
+        st.rerun()
 
 # Step 3: Show Quiz Results
 elif st.session_state.step == 3:
@@ -67,17 +76,20 @@ elif st.session_state.step == 3:
     st.dataframe(get_quiz_leaderboard())
     if st.button("Enter Community Score"):
         st.session_state.step = 4
+        st.rerun()
 
 # Step 4: Enter Community Score
 elif st.session_state.step == 4:
     st.subheader("🤝 Community Participation")
     community_score = st.number_input("Enter your community score (0–10):", 0, 10, step=1)
+
     if st.button("Submit Community Score"):
         try:
             community_score = float(community_score)
             community_badge = score_to_badge(community_score)
             overall_score = (st.session_state.quiz_score + community_score) / 2
             overall_badge = score_to_badge(overall_score)
+
             update_community_score(
                 st.session_state.email,
                 community_score,
@@ -85,13 +97,15 @@ elif st.session_state.step == 4:
                 overall_score,
                 overall_badge
             )
+
             st.session_state.community_score = community_score
             st.session_state.community_badge = community_badge
             st.session_state.step = 5
+            st.rerun()
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Error submitting community data: {e}")
 
-# Step 5: Show Community & Overall Leaderboards
+# Step 5: Show Community Leaderboard
 elif st.session_state.step == 5:
     st.success(f"🫂 Community Score: {st.session_state.community_score}/10")
     st.info(f"🤝 Community Badge: {st.session_state.community_badge}")
@@ -99,6 +113,7 @@ elif st.session_state.step == 5:
     st.dataframe(get_community_leaderboard())
     if st.button("Next: View Overall Leaderboard"):
         st.session_state.step = 6
+        st.rerun()
 
 # Step 6: Overall Leaderboard
 elif st.session_state.step == 6:
